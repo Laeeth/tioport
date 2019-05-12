@@ -116,7 +116,7 @@ public void refactoreStage3(PModule aStaticCtorMod){
 
     gModJArray = packJavaLang.findChildModule("JArray");
 
-    PClassDef createJArrayClassDef( char[] aName, PTypeDef td, bool withClassInfo ){
+    PClassDef createJArrayClassDef( const(char)[] aName, PTypeDef td, bool withClassInfo ){
         PClassDef res = new PClassDef( gModJArray );
         res.mModifiers = new PModifiers;
         res.mName      = "JArray" ~ aName;
@@ -167,7 +167,7 @@ public void refactoreStage3(PModule aStaticCtorMod){
             res.mMethods ~= mth;
             indexFnc[ mth ] = true;
         }
-        PMethodDef createAssignOpMethod( char[] name ){
+        PMethodDef createAssignOpMethod( const(char)[] name ){
             PMethodDef mth = res.createMethod( "indexAssign" ~ name );
             mth.mParams ~= new PParameterDef( gModJArray, "val", new PTypeInst( td, 0, true ) );
             mth.mParams ~= new PParameterDef( gModJArray, "index", new PTypeInst( gBuildinTypeInt, 0, true ) );
@@ -191,7 +191,7 @@ public void refactoreStage3(PModule aStaticCtorMod){
         res.mMethods ~= createAssignOpMethod( "ShiftLeft" );
         res.mMethods ~= createAssignOpMethod( "ShiftRight" );
 
-        PMethodDef createAssignUnaryMethod( char[] name ){
+        PMethodDef createAssignUnaryMethod( const(char)[] name ){
             PMethodDef mth = res.createMethod( "indexAssign" ~ name );
             mth.mParams ~= new PParameterDef( gModJArray, "index", new PTypeInst( gBuildinTypeInt, 0, true ) );
             mth.mReturnType = new PTypeInst( td, 0, true );
@@ -202,7 +202,7 @@ public void refactoreStage3(PModule aStaticCtorMod){
         res.mMethods ~= createAssignUnaryMethod( "Incr" );
         res.mMethods ~= createAssignUnaryMethod( "PostIncr" );
 
-        PMethodDef createEvalOrdedMeth( char[] name, PTypeDef td ){
+        PMethodDef createEvalOrdedMeth( const(char)[] name, PTypeDef td ){
             PMethodDef mth = res.createMethod( name );
             mth.mParams ~= new PParameterDef( gModIntern, "a", new PTypeInst( td, 0, true ) );
             mth.mParams ~= new PParameterDef( gModIntern, "b", new PTypeInst( td, 0, true ) );
@@ -231,7 +231,7 @@ public void refactoreStage3(PModule aStaticCtorMod){
     gJArrayDouble  = createJArrayClassDef( "Double" , gBuildinTypeDouble , false );
     gJArrayChar    = createJArrayClassDef( "Char"   , gBuildinTypeChar   , false );
 
-    PMethodDef createJArrayInstanceOf( char[] aName, bool withClassInfo ){
+    PMethodDef createJArrayInstanceOf( const(char)[] aName, bool withClassInfo ){
         PMethodDef res = gModJArray.createMethod( "arrayInstanceOf" ~ aName );
         res.mParams ~= new PParameterDef( gModJArray, "aObj", new PTypeInst( gIJObject, 0, true ) );
         res.mParams ~= new PParameterDef( gModJArray, "aDim", new PTypeInst( gBuildinTypeInt, 0, true ) );
@@ -328,7 +328,7 @@ public void refactoreStage3(PModule aStaticCtorMod){
 
 private:
 
-void renameModule(PModule aModule, char[] aNewName){
+void renameModule(PModule aModule, const(char)[] aNewName){
     PTypeDef td = aModule.findChildTypeDef(aModule.mName);
 
     td.mName      = aNewName.dup;
@@ -429,7 +429,7 @@ public bool isArrayTypeDef( PTypeDef td ){
 PMethodDef fncCastObjectToArray;
 PMethodDef fncCastArrayToObject;
 
-char[] getMangledType( PTypeInst ti ){
+const(char)[] getMangledType( PTypeInst ti ){
     char[] res;
     PTypeInst cur = ti;
     while( cur.mTypeRef.mGenericArgs.length == 1 && isArrayType( cur.mTypeRef.mResolvedTypeDef ) ){
@@ -462,7 +462,7 @@ PExpr makeLiteralIntegerHex( int aValue ){
     return e;
 }
 
-PExpr makeString( char[] str ){
+PExpr makeString( const(char)[] str ){
     PExprLiteral e = new PExprLiteral();
     e.mType = LiteralType.LITERAL_null;
     e.mText = "\"" ~ str ~ "\"";
@@ -990,7 +990,7 @@ bool isArrayType( PTypeDef aTi ){
 class MethodListMakerFixer : PartTraversVisitor {
     alias  PartTraversVisitor.visit visit;
 
-    private void addMethod( inout PCtor[][ char[] ] aAccessibleMethods, char[] aName, PCtor aMethod ){
+    private void addMethod( inout PCtor[][ const(char)[] ] aAccessibleMethods, const(char)[] aName, PCtor aMethod ){
         if( !( aName in aAccessibleMethods )){
             aAccessibleMethods[ aName.dup ] = [ aMethod ];
         }
@@ -1019,7 +1019,7 @@ class MethodListMakerFixer : PartTraversVisitor {
             PInterfaceDef id = cast(PInterfaceDef)tr.mResolvedTypeDef;
             assert( id !is null );
             updateInterfaces( id );
-            foreach( char[] k; id.mAccessibleMethods.keys ){
+            foreach(  k; id.mAccessibleMethods.keys ){
                 foreach( PCtor mth; id.mAccessibleMethods[ k ] ){
                     addMethod( p.mAccessibleMethods, k, mth );
                 }
@@ -1044,7 +1044,7 @@ class MethodListMakerFixer : PartTraversVisitor {
             PClassDef sc = cast(PClassDef)( p.mSuperClass.mResolvedTypeDef );
             assert( sc !is null );
             updateClasses( sc );
-            foreach( char[] k; sc.mAccessibleMethods.keys ){
+            foreach(  k; sc.mAccessibleMethods.keys ){
                 foreach( PCtor mth; sc.mAccessibleMethods[ k ] ){
                     addMethod( p.mAccessibleMethods, k, mth );
                 }
@@ -1054,7 +1054,7 @@ class MethodListMakerFixer : PartTraversVisitor {
             PInterfaceDef id = cast(PInterfaceDef)tr.mResolvedTypeDef;
             assert( id !is null );
             updateInterfaces( id );
-            foreach( char[] k; id.mAccessibleMethods.keys ){
+            foreach(  k; id.mAccessibleMethods.keys ){
                 foreach( PCtor mth; id.mAccessibleMethods[ k ] ){
                     addMethod( p.mAccessibleMethods, k, mth );
                 }
@@ -1064,7 +1064,7 @@ class MethodListMakerFixer : PartTraversVisitor {
             PClassDef oc = cast(PClassDef)p.mParent;
             assert( oc !is null );
             updateClasses( oc );
-            foreach( char[] k; oc.mAccessibleMethods.keys ){
+            foreach(  k; oc.mAccessibleMethods.keys ){
                 foreach( PCtor mth; oc.mAccessibleMethods[ k ] ){
                     addMethod( p.mAccessibleMethods, k, mth );
                 }
@@ -1083,7 +1083,7 @@ class MethodListMakerFixer : PartTraversVisitor {
         }
 
         //if( p.getFqn() == "org.eclipse.swt.events.TypedEvent.TypedEvent" ){
-        //    foreach( char[] k; p.mAccessibleMethods.keys ){
+        //    foreach(  k; p.mAccessibleMethods.keys ){
         //        PCtor[] cts = p.mAccessibleMethods[ k ];
         //        foreach( PCtor ct; cts ){
         //            Stdout.formatln( " 1 accessible {} : {} >{}", k, ct.toUtf8, ct.mName );
@@ -1091,7 +1091,7 @@ class MethodListMakerFixer : PartTraversVisitor {
         //    }
         //}
         //if( p.getFqn() == "org.eclipse.swt.custom.BidiSegmentEvent.BidiSegmentEvent" ){
-        //    foreach( char[] k; p.mAccessibleMethods.keys ){
+        //    foreach(  k; p.mAccessibleMethods.keys ){
         //        PCtor[] cts = p.mAccessibleMethods[ k ];
         //        
         //        foreach( PCtor ct; cts ){
@@ -1228,7 +1228,7 @@ class IdentifierEscaperFixer : PartTraversVisitor {
         }
         super.visit(p);
     }
-    char[] escape(char[] name){
+    const(char)[] escape(const(char)[] name){
         switch (name) {
         case "alias":
         case "align":
@@ -1351,7 +1351,7 @@ class NativeDelegationFixer : PartTraversVisitor {
         ///gJavaIntern.mModuleMethods ~= mFncGetJni;
     }
 
-    private char[] mangle( char[] str ){
+    private const(char)[] mangle( const(char)[] str ){
         str = .substitute( str, "[", "|3" );
         str = .substitute( str, ";", "|2" );
         str = .substitute( str, "_", "|1" );
@@ -1360,7 +1360,7 @@ class NativeDelegationFixer : PartTraversVisitor {
         str = .substitute( str, "/", "_" );
         return str;
     }
-    private char[] getMethodCName( PModule aModule, PInterfaceDef aIntf, PMethodDef aMethod ){
+    private const(char)[] getMethodCName( PModule aModule, PInterfaceDef aIntf, PMethodDef aMethod ){
         int cnt = 0;
         foreach( PMethodDef mth; aIntf.mMethods ){
             if( mth.mName.length > 0 && mth.mName == aMethod.mName && mth.mModifiers.mNative ){
@@ -2753,7 +2753,7 @@ class RenameShadowingVarsFixer : PartTraversVisitor {
         char[][] oldvars = vars.keys.dup;
         super.visit(p);
         vars = null;
-        foreach( char[] v; oldvars ){
+        foreach(  v; oldvars ){
             vars[ v ] = true;
         }
     }
@@ -2761,7 +2761,7 @@ class RenameShadowingVarsFixer : PartTraversVisitor {
         char[][] oldvars = vars.keys.dup;
         super.visit(p);
         vars = null;
-        foreach( char[] v; oldvars ){
+        foreach(  v; oldvars ){
             vars[ v ] = true;
         }
     }
@@ -2769,7 +2769,7 @@ class RenameShadowingVarsFixer : PartTraversVisitor {
         char[][] oldvars = vars.keys.dup;
         super.visit(p);
         vars = null;
-        foreach( char[] v; oldvars ){
+        foreach(  v; oldvars ){
             vars[ v ] = true;
         }
     }
@@ -2967,10 +2967,10 @@ class FinallyBlockFixer : PartTraversVisitor {
         alias PartTraversVisitor.visit visit;
         PLocalVarDef set;
         PLocalVarDef val;
-        char[] labelName;
+        const(char)[] labelName;
         bool found;
 
-        public this( char[] aEndLabelName, PLocalVarDef set, PLocalVarDef val ){
+        public this( const(char)[] aEndLabelName, PLocalVarDef set, PLocalVarDef val ){
             labelName = aEndLabelName;
             this.set = set;
             this.val = val;
@@ -3287,7 +3287,7 @@ class PullinDerivedMethodsFixer : PartTraversVisitor {
                     }
                 }
             }
-            foreach (char[] newName; newNames) {
+            foreach ( newName; newNames) {
                 foreach (PMethodDef m; p.mMethods) {
                     if (m.mName == newName && m.mModifiers.mProtection != Protection.PRIVATE) {
                         AliasFunction a = new AliasFunction;
@@ -3366,7 +3366,7 @@ class ImportOnlyNeededFixer : PartTraversVisitor {
             map[mod.getFqn()] = mod;
         }
         char[][] sortedKeys = map.keys.sort;
-        foreach (char[] name; sortedKeys) {
+        foreach ( name; sortedKeys) {
             PModule mod = map[name];
             if (mod !is p) {
                 p.mImportedModules ~= mod;
@@ -4238,7 +4238,7 @@ class AssignTypesFixer : PartTraversVisitor {
         }
     }
 
-    private void fixArguments( PParameterDef[] pds, PExpr[] exs, char[] aName ){
+    private void fixArguments( PParameterDef[] pds, PExpr[] exs, const(char)[] aName ){
         for( int i = 0; i < pds.length; i++ ){
             PParameterDef pd = pds[i];
             if( pd.mIsVariableLength ){

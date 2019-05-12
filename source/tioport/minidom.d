@@ -9,21 +9,21 @@ import tango.text.Text;
 import tioport.utils;
 
 
-void check( bool aCondition, char[] aMessage ){
+void check( bool aCondition, const(char)[] aMessage ){
     if( !aCondition ){
         throw new Exception( aMessage );
     }
 }
 
 class Element {
-    char[]         mName;
+    const(char)[]         mName;
     Element[]      mChilds;
     Element        mSibling;
     char[][char[]] mAttributes;
-    char[]         mText;
+    const(char)[]         mText;
     Element        mParent;
 
-    public this( char[] aName, Element aParent ){
+    this( const(char)[] aName, Element aParent ){
         mName   = aName.dup;
         mParent = aParent;
         mText   = "";
@@ -32,7 +32,7 @@ class Element {
         }
     }
 
-    public void appendChild( Element aChild ){
+    void appendChild( Element aChild ){
         if( mChilds.length > 0 ){
              mChilds[$-1].setSibling( aChild );
         }
@@ -40,14 +40,14 @@ class Element {
         aChild.mParent = this;
     }
 
-    public int getChildIdx( Element aChild ){
+    int getChildIdx( Element aChild ){
         foreach( int idx, Element e; mChilds ){
             if( aChild is e ){
                 return idx;
             }
         }
     }
-    public void addChild( Element aChild, int aIdx ){
+    void addChild( Element aChild, int aIdx ){
         Element[] sl = mChilds[0..aIdx];
         Element[] sr = mChilds[aIdx..$];
         Element cl = sl.length > 0 ? sl[ $-1 ] : null;
@@ -60,7 +60,7 @@ class Element {
         mChilds = sl ~ aChild ~ sr;
     }
 
-    public Element getParent(){
+    Element getParent(){
         return mParent;
     }
 
@@ -68,49 +68,49 @@ class Element {
         mSibling = aOther;
     }
 
-    public Element getSibling(){
+    Element getSibling(){
         return mSibling;
     }
 
-    public Element getFirstChild(){
+    Element getFirstChild(){
         if( mChilds.length > 0 ){
             return mChilds[0];
         }
         return null;
     }
 
-    public char[] getName(){
+    const(char)[] getName(){
         return mName.dup;
     }
 
-    public Element createChildElement( char[] aName ){
+    Element createChildElement( const(char)[] aName ){
         Element result = new Element( aName, this );
         return result;
     }
 
-    public void completeChildElement( char[] aName, Element aChild ){
+    void completeChildElement( const(char)[] aName, Element aChild ){
     }
 
-    public void completeYourself(){
+    void completeYourself(){
         mText = .trim( mText );
     }
 
-    public char[] getText(){
+    const(char)[] getText(){
         return mText;
     }
-    public void setText( char[] aText ){
+    void setText( const(char)[] aText ){
         mText = aText.dup;
     }
 
-    public void addAttribute(char[] key, char[] value){
-        mAttributes[ key.dup ] = value.dup;
+    void addAttribute(const(char)[] key, const(char)[] value){
+        mAttributes[ key.idup ] = value.dup;
     }
 
-    public void characterData (char[] data){
+    void characterData (const(char)[] data){
         mText ~= data.dup;
     }
 
-    private char[] indent( int aIndent ){
+    private const(char)[] indent( int aIndent ){
         char[] result;
         for( int i; i < aIndent; i++ ){
             result ~= "  ";
@@ -118,9 +118,9 @@ class Element {
         return result;
     }
 
-    public char[] escape( char[] aValue ){
-        char[] res;
-        foreach( char c; aValue ){
+    string escape( const(char)[] aValue ){
+        string res;
+        foreach( c; aValue ){
             switch( c ){
                 case '&': res ~= "&amp;"; break;
                 case '"': res ~= "&quot;"; break;
@@ -133,10 +133,10 @@ class Element {
         return res;
     }
 
-    public char[] getString( int aIndent = 0 ){
-        char[] result;
+    const(char)[] getString( int aIndent = 0 ){
+        string result;
         result ~= indent( aIndent ) ~ '<' ~ mName;
-        foreach( char[] key, char[] value; mAttributes ){
+        foreach(  key, value; mAttributes ){
             result ~= ' ' ~ key ~ "=\"" ~ escape( value ) ~ "\"";
         }
         if(( mChilds.length == 0 ) && ( mText.length == 0 )){
@@ -160,7 +160,7 @@ class Element {
         return result;
     }
     /+
-    public void write( IWriter aWriter, int aIndent ){
+    void write( IWriter aWriter, int aIndent ){
         aWriter( indent( aIndent ) )( '<' )( mName );
         foreach( char[] key, char[] value; mAttributes ){
             aWriter( ' ' )( key )( "=\""c )( escape( value ))( "\""c );
@@ -185,10 +185,10 @@ class Element {
         aWriter.newline();
     }
     +/
-    public bool hasAttribute( char[] aName ){
+    bool hasAttribute( const(char)[] aName ){
         return cast(bool)( aName in mAttributes );
     }
-    public bool hasChild( char[] aName ){
+    bool hasChild( const(char)[] aName ){
         foreach( Element child; mChilds ){
             if( child.mName == aName ){
                 return true;
@@ -196,7 +196,7 @@ class Element {
         }
         return false;
     }
-    public Element tryGetChild( char[] aName ){
+    Element tryGetChild( const(char)[] aName ){
         foreach( Element child; mChilds ){
             if( child.mName == aName ){
                 return child;
@@ -204,21 +204,21 @@ class Element {
         }
         return null;
     }
-    public Element getChild( char[] aName ){
+    Element getChild( const(char)[] aName ){
         Element result = tryGetChild( aName );
         check( result !is null, Layouter( "Element.getChild mName={0}, aName={1}", mName, aName ) );
         return result;
     }
 
-    public void removeChilds( Element[] aChilds ){
+    void removeChilds( Element[] aChilds ){
         foreach( Element e; aChilds ){
             removeChild( e );
         }
     }
 
-    public void removeChild( Element aChild ){
-        int idx = -1;
-        foreach( int i, Element e; mChilds ){
+    void removeChild( Element aChild ){
+        long idx = -1;
+        foreach( long i, Element e; mChilds ){
             if( e is aChild ){
                 idx = i;
                 break;
@@ -236,16 +236,17 @@ class Element {
         mChilds = mChilds[ 0 .. idx ] ~ mChilds[ idx+1 .. $ ];
     }
 
-    public Element getChild( int aIndex ){
+    Element getChild( int aIndex ){
         return mChilds[ aIndex ];
     }
-    public Element[] getChilds(){
+    Element[] getChilds(){
         return mChilds.dup;
     }
-    public uint getChildCount(){
-        return mChilds.length;
+    uint getChildCount(){
+	import std.conv:to;
+	return mChilds.length.to!uint;
     }
-    public Element[] getChilds( char[] aName ){
+    Element[] getChilds( const(char)[] aName ){
         Element[] result;
         foreach( Element child; mChilds ){
             if( child.mName == aName ){
@@ -254,7 +255,7 @@ class Element {
         }
         return result;
     }
-    public Element[] findChilds( bool delegate( Element aChild ) aDg ){
+    Element[] findChilds( bool delegate( Element aChild ) aDg ){
         Element[] result;
         foreach( Element child; mChilds ){
             if( aDg( child ) ){
@@ -263,7 +264,7 @@ class Element {
         }
         return result;
     }
-    public Element tryFindChild( bool delegate( Element aChild ) aDg ){
+    Element tryFindChild( bool delegate( Element aChild ) aDg ){
         foreach( Element child; mChilds ){
             if( aDg( child ) ){
                 return child;
@@ -271,12 +272,12 @@ class Element {
         }
         return null;
     }
-    public Element findChild( bool delegate( Element aChild ) aDg ){
+    Element findChild( bool delegate( Element aChild ) aDg ){
         Element result = tryFindChild( aDg );
         check( result !is null , Layouter( "Element.findChild mName={0}, not found", mName ) );
         return result;
     }
-    public char[] getAttribute( char[] aKey ){
+    char[] getAttribute( const(char)[] aKey ){
         check( cast(bool)(aKey in mAttributes), Layouter( "Element {0} does not contain the attribute {1}", mName, aKey ));
         return mAttributes[ aKey ].dup;
     }
@@ -284,20 +285,20 @@ class Element {
 
 class Document {
     private Element mElement;
-    public Element createRootElement( char[] aName ){
+    Element createRootElement( const(char)[] aName ){
         mElement = new Element( aName, null );
         return mElement;
     }
-    public void completeRootElement( char[] aName, Element aChild ){
+    void completeRootElement( const(char)[] aName, Element aChild ){
     }
-    public void setRoot( Element aRoot ){
+    void setRoot( Element aRoot ){
         mElement = aRoot;
     }
-    public Element getRoot(){
+    Element getRoot(){
         return mElement;
     }
     /+
-    public void write( IWriter aWriter ){
+    void write( IWriter aWriter ){
         aWriter( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"c ).newline();
         mElement.write( aWriter, 0 );
         aWriter();

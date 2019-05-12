@@ -91,8 +91,8 @@ interface Visitor {
     void visit(PStatAssert p);
 }
 class StdVisitor : Visitor {
-    char[] mName;
-    protected this(char[] aName){
+    const(char)[] mName;
+    protected this(const(char)[] aName){
         mName = aName;
     }
     void visit(PPart p){
@@ -332,7 +332,7 @@ class PartTraversVisitor : Visitor {
                 e.mPartParent = aParent;
                 e.accept(this);
             }
-        } catch( Object o ){
+        } catch( Throwable o ){
             if( !exceptionThrown ){
                 Stdout.formatln( "Exception @ {}", scopeStackToUtf8 );
                 exceptionThrown = true;
@@ -354,32 +354,41 @@ class PartTraversVisitor : Visitor {
     void visit(PPart p){
     }
     void visit(PPackage p){
+	import std.algorithm:map;
+	import std.array:array;
+	PPart pp = cast(PPart)p;
         PPackage bak = mPackage;
         mPackage = p;
 
-        goVisitPart( p, p.mModules);
-        goVisitPart( p, p.mPackages);
+        goVisitPart( pp, p.mModules.map!(m => cast(PPart)m).array);
+        goVisitPart( pp, p.mPackages.map!(mp => cast(PPart)mp).array);
 
         mPackage = bak;
     }
     void visit(PRootPackage p){
+	import std.algorithm:map;
+	import std.array:array;
+	PPart pp = cast(PPart)p;
 
         mRoot = p;
         mPackage = p;
 
-        goVisitPart( p, p.mGlobalTypeDefs);
-        goVisitPart( p, p.mModules);
-        goVisitPart( p, p.mPackages);
+        goVisitPart( pp, p.mGlobalTypeDefs.map!(t => cast(PPart)t).array);
+        goVisitPart( pp, p.mModules.map!(mm => cast(PPart)mm).array);
+        goVisitPart( pp, p.mPackages.map!(mp => cast(PPart)mp).array);
     }
     void visit(PModule p){
+	import std.algorithm:map;
+	import std.array:array;
+	PPart pp = cast(PPart)p;
         mTypeDef = null;
         mModuleTypeDef = null;
         PModule bak = mModule;
         mModule = p;
 
-        goVisitPart( p, p.mModuleMethods);
-        goVisitPart( p, p.mImports);
-        goVisitPart( p, p.mTypeDefs);
+        goVisitPart( pp, p.mModuleMethods.map!(mm => cast(PPart)mm).array);
+        goVisitPart( pp, p.mImports.map!(mi => cast(PPart)mi).array);
+        goVisitPart( pp, p.mTypeDefs.map!(t => cast(PPart)t).array);
 
         mModule = bak;
     }
@@ -407,6 +416,10 @@ class PartTraversVisitor : Visitor {
     void visit(PClassDef p){
                 pushScope( p );
                 scope(exit) popScope();
+	import std.algorithm:map;
+	import std.array:array;
+	PPart pp = cast(PPart)p;
+
         if( mModuleTypeDef is null ){
             mModuleTypeDef = p;
         }
@@ -414,12 +427,12 @@ class PartTraversVisitor : Visitor {
         p.mParent = mTypeDef;
         mTypeDef = p;
 
-        goVisitPart( p, p.mMethods);
-        goVisitPart( p, p.mTypeDefs);
-        goVisitPart( p, p.mFields);
-        goVisitPart( p, p.mCtors);
-        goVisitPart( p, p.mStaticCtors);
-        goVisitPart( p, p.mInstanceInits);
+        goVisitPart( pp, p.mMethods.map!(mm => cast(PPart)mm).array);
+        goVisitPart( pp, p.mTypeDefs.map!(td => cast(PPart)td).array);
+        goVisitPart( pp, p.mFields.map!(mf => cast(PPart)mf).array);
+        goVisitPart( pp, p.mCtors.map!(mc => cast(PPart)mc).array);
+        goVisitPart( pp, p.mStaticCtors.map!(sc => cast(PPart)sc).array);
+        goVisitPart( pp, p.mInstanceInits.map!(ii => cast(PPart)ii).array);
 
         mTypeDef = bak;
     }
@@ -427,67 +440,78 @@ class PartTraversVisitor : Visitor {
         //nothing
     }
     void visit(PVarDef p){
-        goVisitPart( p, p.mInitializer);
+	PPart pp = cast(PPart)p;
+        goVisitPart( pp, p.mInitializer);
     }
     void visit(PFieldDef p){
-        goVisitPart( p, p.mInitializer);
+	PPart pp = cast(PPart)p;
+        goVisitPart( pp, p.mInitializer);
     }
     void visit(PLocalVarDef p){
-        goVisitPart( p, p.mInitializer);
+	PPart pp = cast(PPart)p;
+        goVisitPart( pp, p.mInitializer);
     }
     void visit(PCallable p){
+	PPart pp = cast(PPart)p;
         PCallable bak = mCallable;
         mCallable = p;
                 pushScope( p );
                 scope(exit) popScope();
-        goVisitPart( p, p.mStatList);
+        goVisitPart( pp, p.mStatList);
         mCallable = bak;
     }
     void visit(PCtor p){
+	PPart pp = cast(PPart)p;
         PCallable bak = mCallable;
         mCallable = p;
                 pushScope( p );
                 scope(exit) popScope();
-        goVisitPart( p, p.mParams);
-        goVisitPart( p, p.mStatList);
+        goVisitPart( pp, p.mParams);
+        goVisitPart( pp, p.mStatList);
         mCallable = bak;
     }
     void visit(PStaticCtor p){
+	PPart pp = cast(PPart)p;
         PCallable bak = mCallable;
         mCallable = p;
                 pushScope( p );
                 scope(exit) popScope();
-        goVisitPart( p, p.mStatList);
+        goVisitPart( pp, p.mStatList);
         mCallable = bak;
     }
     void visit(PInstanceInit p){
+	PPart pp = cast(PPart)p;
         PCallable bak = mCallable;
         mCallable = p;
                 pushScope( p );
                 scope(exit) popScope();
-        goVisitPart( p, p.mStatList);
+        goVisitPart( pp, p.mStatList);
         mCallable = bak;
     }
     void visit(PMethodDef p){
+	PPart pp = cast(PPart)p;
         PCallable bak = mCallable;
         mCallable = p;
         pushScope( p );
         scope(exit) popScope();
-        goVisitPart( p, p.mParams);
-        goVisitPart( p, p.mStatList);
+        goVisitPart( pp, p.mParams);
+        goVisitPart( pp, p.mStatList);
         mCallable = bak;
     }
     void visit(PVarInitializer p){
         // nothing
     }
     void visit(PVarInitExpr p){
-        goVisitPart( p, p.mExpr);
+	PPart pp = cast(PPart)p;
+        goVisitPart( pp, p.mExpr);
     }
     void visit(PVarInitArray p){
-        goVisitPart( p, p.mInitializers);
+	PPart pp = cast(PPart)p;
+        goVisitPart( pp, p.mInitializers);
     }
     void visit(PArrayDecl p){
-        goVisitPart( p, p.mCount);
+	PPart pp = cast(PPart)p;
+        goVisitPart( pp, p.mCount);
     }
     void visit(PExpr p){
         // nothing

@@ -62,13 +62,13 @@ PTypeDef             gTypeJavaLangJArray;
 class PBuildinType : PTypeDef {
     bool        mIsPtr;
     int         mOrder;
-    char[]      mDefaultValue;
+    const(char)[]      mDefaultValue;
     LiteralType mLiteralType;
-    char[]      mMangledTypeName;
+    const(char)[]      mMangledTypeName;
 
     PFieldDef   mClass;
 
-    public this(char[] aName, char[] aDefaultValue, LiteralType aLiteralType, int aOrder, char[] aMangledTypeName ){
+    this(const(char)[] aName, const(char)[] aDefaultValue, LiteralType aLiteralType, int aOrder, const(char)[] aMangledTypeName ){
         super( gJavaIntern );
         mName         = aName;
         mOrder        = aOrder;
@@ -76,7 +76,7 @@ class PBuildinType : PTypeDef {
         mLiteralType  = aLiteralType;
         mMangledTypeName = aMangledTypeName;
     }
-    public override int opCmp(Object aOther){
+    override int opCmp(Object aOther){
         PBuildinType o = cast(PBuildinType)aOther;
 
         if (mOrder == o.mOrder) {
@@ -114,7 +114,7 @@ class PBuildinType : PTypeDef {
         return(0);
     }
 
-    override char[] getFqn( bool excludeModule = false ){
+    override const(char)[] getFqn( bool excludeModule = false ){
         if( mIsPtr ){
             return mName ~ "*";
         }
@@ -122,13 +122,13 @@ class PBuildinType : PTypeDef {
             return mName;
         }
     }
-    public override char[] mangledType(){
+    override const(char)[] mangledType(){
         return mMangledTypeName;
     }
 }
 
 class PBuildinTypeNull : PBuildinType {
-    public this(){
+    this(){
         super("null", "null", LiteralType.LITERAL_null, 0, "0" );
     }
 
@@ -166,7 +166,7 @@ static this(){
     gBuildinTypeCharD   = new PBuildinType("char", "' '", LiteralType.CHAR_LITERAL, 1, "C");
 }
 
-public void initializeWellKnownTypes(){
+void initializeWellKnownTypes(){
     gRootPackage.mGlobalTypeDefs ~= gBuildinTypeNull;
     gRootPackage.mGlobalTypeDefs ~= gBuildinTypeVoid;
     gRootPackage.mGlobalTypeDefs ~= gBuildinTypeUInt;
@@ -221,19 +221,19 @@ abstract class PPart {
 }
 
 interface IScope {
-    //IScope findChildScope(char[] aName);
-    //IScope findScopeWithName(char[] aName);
-    //IScope findScopeWithTypeDef(char[] aName);
+    //IScope findChildScope(const(char)[] aName);
+    //IScope findScopeWithName(const(char)[] aName);
+    //IScope findScopeWithTypeDef(const(char)[] aName);
 
-    PPackage      findChildPackage(char[] aName);
-    //PModule       findChildModule(char[] aName);
-    PTypeDef      findChildTypeDef(char[] aName);
+    PPackage      findChildPackage(const(char)[] aName);
+    //PModule       findChildModule(const(char)[] aName);
+    PTypeDef      findChildTypeDef(const(char)[] aName);
     PTypeDef      findOuterTypeDef();
-    PTypeInst     findTypeInst(char[] aName);
-    PParameterDef findParameterDef(char[] aName);
-    PCallable     findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance);
-    char[]        toUtf8();
-    //PParameterDef findParameterDef(char[] aName);
+    PTypeInst     findTypeInst(const(char)[] aName);
+    PParameterDef findParameterDef(const(char)[] aName);
+    PCallable     findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance);
+    const(char)[]        toUtf8() @trusted;
+    //PParameterDef findParameterDef(const(char)[] aName);
 }
 
 class PRootPackage : PPackage {
@@ -242,7 +242,7 @@ class PRootPackage : PPackage {
     PPackage   mJavaLangPackage;
     PTypeDef[] mGlobalTypeDefs;
 
-    override PTypeDef findChildTypeDef(char[] aName){
+    override PTypeDef findChildTypeDef(const(char)[] aName){
         assert(mJavaLangPackage !is null);
         foreach (PTypeDef td; mGlobalTypeDefs) {
             if (td.mName == aName) {
@@ -260,7 +260,7 @@ class PPackage : PPart, IScope {
     mixin PartStdImpl!(true);
     PPackage[] mPackages;
     PModule[]  mModules;
-    char[]     mName;
+    const(char)[]     mName;
     PPackage   mParent;
 
     PPackage[] getPackages(){
@@ -271,7 +271,7 @@ class PPackage : PPart, IScope {
     }
 
 
-    PPackage getOrCreatePackage(char[] aName){
+    PPackage getOrCreatePackage(const(char)[] aName){
         PPackage p = findChildPackage(aName);
 
         if (!p) {
@@ -283,12 +283,12 @@ class PPackage : PPart, IScope {
         return(p);
     }
 
-    PModule createFqnModule(char[] aName){
+    PModule createFqnModule(const(char)[] aName){
         //FIXME no fqn procession
         return createModule( aName );
     }
 
-    PModule createModule(char[] aName){
+    PModule createModule(const(char)[] aName){
         assert(findChildModule(aName) is null, aName );
         PModule p = new PModule;
         p.mName    = aName;
@@ -297,11 +297,11 @@ class PPackage : PPart, IScope {
         return(p);
     }
 
-    char[] getFqn(){
+    const(char)[] getFqn(){
         if (mParent is null) {
             return(null);
         }
-        char[] res = mParent.getFqn();
+        auto res = mParent.getFqn();
         if (res is null) {
             return(mName);
         }
@@ -309,7 +309,7 @@ class PPackage : PPart, IScope {
             return(res ~ '.' ~ mName);
         }
     }
-    PModule  findChildModule(char[] aName){
+    PModule  findChildModule(const(char)[] aName){
         foreach (PModule p; mModules) {
             if (p.mName == aName) {
                 return(p);
@@ -323,7 +323,7 @@ class PPackage : PPart, IScope {
     }
     ///////////////////////////////////////////
     // IScope
-    PPackage findChildPackage(char[] aName){
+    PPackage findChildPackage(const(char)[] aName){
         foreach (PPackage p; mPackages) {
             if (p.mName == aName) {
                 return(p);
@@ -331,7 +331,7 @@ class PPackage : PPart, IScope {
         }
         return(null);
     }
-    PTypeDef findChildTypeDef(char[] aName){
+    PTypeDef findChildTypeDef(const(char)[] aName){
         if (PModule mod = findChildModule(aName)) {
             return(mod.findChildTypeDef(aName));
         }
@@ -340,43 +340,43 @@ class PPackage : PPart, IScope {
     PTypeDef findOuterTypeDef(){
         return(null);
     }
-    PTypeInst findTypeInst(char[] aName){
+    PTypeInst findTypeInst(const(char)[] aName){
         return(null);
     }
-    PParameterDef findParameterDef(char[] aName){
+    PParameterDef findParameterDef(const(char)[] aName){
         return(null);
     }
-    PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
         return(null);
     }
-    char[] toUtf8(){
+    const(char)[] toUtf8() @trusted{
         return(Layouter("[PPackage mName={0}]", mName));
     }
 }
 
 class PModule : PPart, IScope {
     mixin PartStdImpl!true;
-    char[]       mHeaderText;
+    const(char)[]       mHeaderText;
     PPackage     mPackage;
     PImport[]    mImports;
     PTypeDef[]   mTypeDefs;
     PTypeDef[]   mVsibileTypeDefs; // these are visible for resolving types.
     PModule[]    mImportedModules; // these are really imported
     PMethodDef[] mModuleMethods;
-    char[]       mName;
+    const(char)[]       mName;
     bool         mIsStub; // stubs are not written to D targets.
     bool         mIsNowrite; // Do not write any output file for this module.
 
-    char[][ char[] ] mExchangeFuncs;
+    const(char)[][ const(char)[] ] mExchangeFuncs;
 
-    public this(){
+    this(){
         mPackage = new PPackage;
     }
-    char[]       getFqn(){
+    const(char)[]       getFqn(){
         if( mPackage is null ){
             return mName;
         }
-        char[] res = mPackage.getFqn();
+        auto res = mPackage.getFqn();
         if (res is null) {
             return(mName);
         }
@@ -385,7 +385,7 @@ class PModule : PPart, IScope {
         }
     }
 
-    PTypeDef findImportedTypeDef(char[] aName){
+    PTypeDef findImportedTypeDef(const(char)[] aName){
         foreach (PTypeDef p; mVsibileTypeDefs) {
             if (p.mName == aName) {
                 return(p);
@@ -394,7 +394,7 @@ class PModule : PPart, IScope {
         return(null);
     }
 
-    PMethodDef createMethod( char[] aName ){
+    PMethodDef createMethod( const(char)[] aName ){
         PMethodDef res = new PMethodDef;
         res.mName = aName;
         res.mModifiers = new PModifiers;
@@ -408,10 +408,10 @@ class PModule : PPart, IScope {
 
     ///////////////////////////////////////////
     // IScope
-    PPackage findChildPackage(char[] aName){
+    PPackage findChildPackage(const(char)[] aName){
         return(null);
     }
-    PTypeDef findChildTypeDef(char[] aName){
+    PTypeDef findChildTypeDef(const(char)[] aName){
         foreach (PTypeDef p; mTypeDefs) {
             if (p.mName == aName) {
                 return(p);
@@ -422,55 +422,55 @@ class PModule : PPart, IScope {
     PTypeDef findOuterTypeDef(){
         return(null);
     }
-    PTypeInst findTypeInst(char[] aName){
+    PTypeInst findTypeInst(const(char)[] aName){
         return(null);
     }
-    PParameterDef findParameterDef(char[] aName){
+    PParameterDef findParameterDef(const(char)[] aName){
         return(null);
     }
-    PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
         return(null);
     }
-    char[] toUtf8(){
+    const(char)[] toUtf8() @trusted{
         return(Layouter("[PModule mName={0}]", mName));
     }
 }
 class PUnnamedModule : PModule {
-    override char[]       getFqn(){
+    override const(char)[]       getFqn(){
         return "";
     }
 }
 
 class PImport : PPart {
     mixin PartStdImpl!true;
-    char[][] mTexts;
+    const(char)[][] mTexts;
     PModule  mModule;
     bool     mStatic;
     bool     mStar;
 
-    public this(char[][] aTexts, bool aStar, bool aStatic){
+    this(const(char)[][] aTexts, bool aStar, bool aStatic){
         mTexts  = aTexts.dup;
         mStar   = aStar;
         mStatic = aStatic;
     }
 
-    char[]   getFqn(){
-        char[] res;
-        foreach (char[] t; mTexts) {
-            res = (res is null) ? t : (res ~ '.' ~ t);
+    const(char)[]   getFqn(){
+        string res;
+        foreach ( t; mTexts) {
+            res = (res is null) ? t.idup : (res ~ '.' ~ t.idup);
         }
         return(res);
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
         assert(false);
     }
-    char[] toUtf8(){
+    const(char)[] toUtf8() @trusted{
         return(Layouter("[PImport fqn={0}]", getFqn()));
     }
 }
 
 class PModifiers {
-    public static char[] mExternIdent = "C".dup;
+    static const(char)[] mExternIdent = "C".dup;
     Protection mProtection = Protection.NOTSET;
     bool       mTransient;
     bool       mFinal;
@@ -499,8 +499,8 @@ class PModifiers {
         result.mStrictfp     = mStrictfp;
         return(result);
     }
-    char[]     getString(){
-        char[] res;
+    const(char)[]     getString() @trusted{
+        string res;
         switch (mProtection) {
         case Protection.PUBLIC:
             res ~= "public "; break;
@@ -524,7 +524,7 @@ class PModifiers {
             res ~= "abstract ";
         }
         if (mNative) {
-            res ~= "extern( " ~ mExternIdent ~ ") ";
+            res ~= "extern( " ~ mExternIdent.idup ~ ") ";
         }
         if (mSynchronized) {
             res ~= "synchronized ";
@@ -543,7 +543,7 @@ class PModifiers {
     bool isStatic(){
         return(mStatic);
     }
-    char[] toUtf8(){
+    const(char)[] toUtf8() @trusted{
         return(Layouter("[PModifier str={0}]", getString()));
     }
     const uint BIT_FINAL        = 0x04;
@@ -606,7 +606,7 @@ class PTypeRef {
         return(result);
     }
 
-    public override bool opEquals( Object o ){
+    override bool opEquals( Object o ){
         PTypeRef t = cast(PTypeRef) o;
         if( t is null ){
             return false;
@@ -623,35 +623,35 @@ class PTypeRef {
         return true;
     }
 
-    char[] getTypeArgsString(){
-        char[] res;
+    const(char)[] getTypeArgsString(){
+        string res;
         if (mTypeArgs !is null) {
             res ~= "!(";
             bool first = true;
             foreach (PTypeInst ti; mTypeArgs) {
                 res ~= first ? " " : ", ";
-                res ~= ti.getString();
+                res ~= ti.getString().idup;
                 first = false;
             }
             res ~= ")";
         }
         return res;
     }
-    char[]         getString(){
+    const(char)[]         getString() @trusted{
         if (mResolvedTypeDef !is null) {
-            return(mResolvedTypeDef.getString( getTypeArgsString()));
+            return(mResolvedTypeDef.getString( getTypeArgsString()).idup);
         }
         else {
-            char[] res;
+            string res;
             foreach (PTypeRefPart tp; mParts) {
-                res = res is null ? tp.mText : res ~ '.' ~ tp.mText;
+                res = res is null ? tp.mText.idup : res ~ '.' ~ tp.mText.idup;
             }
-            return(res ~ getTypeArgsString());
+            return(res ~ getTypeArgsString().idup);
         }
     }
 
-    char[] toUtf8(){
-        char[] res = getString();
+    const(char)[] toUtf8() @trusted {
+        string res = getString().idup;
         if( mGenericArgs.length > 0 ){
             res ~= "<";
             bool first = true;
@@ -659,7 +659,7 @@ class PTypeRef {
                 if( !first ){
                     res ~= ", ";
                 }
-                res ~= ti.toUtf8;
+                res ~= ti.toUtf8.idup;
                 first = false;
             }
             res ~= ">";
@@ -667,16 +667,16 @@ class PTypeRef {
         return( res );
     }
 
-    char[] mangledType(){
+    const(char)[] mangledType(){
         return mResolvedTypeDef.mangledType();
     }
 }
 
 class PTypeRefPart {
-    char[] mText;
+    const(char)[] mText;
     // can also hold <typearguments>
-    public this(){ }
-    public this(char[] aText){ mText = aText; }
+    this(){ }
+    this(const(char)[] aText){ mText = aText; }
     PTypeRefPart clone(){
         PTypeRefPart result = new PTypeRefPart;
 
@@ -721,17 +721,15 @@ class PTypeInst {
         return cast(bool)(mTypeRef == t.mTypeRef);
     }
 
-    char[]   getString(){
-        char[] res;
-        res = mTypeRef.getString();
+    const(char)[]   getString() @trusted {
+        auto res = mTypeRef.getString().idup;
         for (int i = 0; i < mDimensions; i++) {
             res ~= "[]";
         }
         return(res ~ " ");
     }
-    char[] toUtf8(){
-        char[] res;
-        res = mTypeRef.toUtf8();
+    const(char)[] toUtf8() @trusted {
+        auto res = mTypeRef.toUtf8().idup;
         for (int i = 0; i < mDimensions; i++) {
             res ~= "[]";
         }
@@ -758,7 +756,7 @@ class PTypeInst {
         return callType.isCompatibleTo(defType, aIsArray);
     }
 
-    public override bool opEquals( Object o ){
+    override bool opEquals( Object o ){
         PTypeInst t = cast(PTypeInst) o;
         if( t is null ){
             return false;
@@ -769,7 +767,7 @@ class PTypeInst {
 
 class PTypeDef : PStatement, IScope {
     mixin PartStdImpl!(true);
-    char[]     mName;
+    const(char)[]     mName;
     PPackage   mPackage;
     PModule    mModule;
     PTypeDef   mParent;
@@ -779,7 +777,7 @@ class PTypeDef : PStatement, IScope {
         mModule = aModule;
     }
 
-    public override bool opEquals( Object o ){
+    override bool opEquals( Object o ){
         PTypeDef t = cast(PTypeDef) o;
         if( t is null ){
             return false;
@@ -807,12 +805,12 @@ class PTypeDef : PStatement, IScope {
     //    result.mModifiers = mModifiers.clone();
     //    return result;
     //}
-    char[]     getFqn( bool excludeModule = false ){
-        char[]   res;
+    const(char)[]     getFqn( bool excludeModule = false ){
+        string   res;
         PTypeDef cur = this;
         PModule  mod;
         while (cur !is null) {
-            res = res is null ? cur.mName : cur.mName ~ "." ~ res;
+            res = res is null ? cur.mName.idup : cur.mName.idup ~ "." ~ res;
             mod = cur.mModule;
             cur = cur.mParent;
         }
@@ -820,20 +818,20 @@ class PTypeDef : PStatement, IScope {
             return(mName); // buildin types
         }
         else {
-            char[] modfqn = mod.getFqn();
+            auto modfqn = mod.getFqn().idup;
             if( excludeModule ){
-                int idx = .locatePrior( modfqn, '.' );
+                long idx = .locatePrior( modfqn, '.' );
                 modfqn = modfqn[ 0 .. idx ];
             }
             if( modfqn ){
                 return(modfqn ~ "." ~ res);
             }
             else{
-                return mName;
+                return mName.idup;
             }
         }
     }
-    char[] getString( char[] aTypeArgs ){
+    const(char)[] getString( const(char)[] aTypeArgs ) @trusted{
         return getFqn() ~ aTypeArgs;
     }
 
@@ -849,29 +847,29 @@ class PTypeDef : PStatement, IScope {
 
     ///////////////////////////////////////////
     // IScope
-    override PPackage findChildPackage(char[] aName){
+    override PPackage findChildPackage(const(char)[] aName){
         return(null);
     }
-    override PTypeDef findChildTypeDef(char[] aName){
+    override PTypeDef findChildTypeDef(const(char)[] aName){
         //Stdout.formatln("PTypedef findchilddtype {0}", mName, aName);
         return(null);
     }
     override PTypeDef findOuterTypeDef(){
         return(mParent);
     }
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         return(null);
     }
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         return(null);
     }
-    override PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    override PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
         return(null);
     }
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted{
         return(Layouter("[PTypeDef mName={0}]", mName));
     }
-    char[] mangledType(){
+    const(char)[] mangledType(){
         return "L" ~ .replace( getFqn( true ), '.', '/' ) ~ ";";
     }
 }
@@ -886,31 +884,31 @@ class PFuncTypeDef : PTypeDef {
         super( aModule );
     }
 
-    char[]     getFqn(){
-        char[]   res = mReturnType.getString();
+    const(char)[]     getFqn(){
+        auto res = mReturnType.getString().idup;
         res ~= " ";
         res ~= mIsDelegate ? "delegate" : "function";
         res ~= "(";
-        foreach( uint parIdx, PParameterDef pd; mParams ){
+        foreach( ulong parIdx, PParameterDef pd; mParams ){
             if( parIdx > 0 ){
                 res ~= " ";
             }
-            res ~= pd.getString();
+            res ~= pd.getString().idup;
         }
         res ~= ")";
         return(res);
     }
 
-    override char[] getString( char[] aTypeArgs ){
-        char[]   res = mReturnType.getString();
+    override const(char)[] getString( const(char)[] aTypeArgs ) @trusted{
+        auto res = mReturnType.getString().idup;
         res ~= " ";
         res ~= mIsDelegate ? "delegate" : "function";
         res ~= "(";
-        foreach( uint parIdx, PParameterDef pd; mParams ){
+        foreach( ulong parIdx, PParameterDef pd; mParams ){
             if( parIdx > 0 ){
                 res ~= ", ";
             }
-            res ~= pd.mTypeInst.getString();
+            res ~= pd.mTypeInst.getString().idup;
         }
         res ~= ")";
         return(res);
@@ -918,7 +916,7 @@ class PFuncTypeDef : PTypeDef {
 }
 
 class PTypeParameter{
-    char[]      mName;
+    const(char)[]      mName;
     PTypeRef[]  mUpperBounds;
 }
 
@@ -934,13 +932,13 @@ class PInterfaceDef : PTypeDef {
     // the PCtor[] contains a list of all methods/ctors with this name,
     // but they have unique signatures. (overridden ones are removed)
     // ctors are stored with name 'this'.
-    PCtor[][ char[] ] mAccessibleMethods;
+    PCtor[][ const(char)[] ] mAccessibleMethods;
 
-    public this( PModule aModule ){
+    this( PModule aModule ){
         super( aModule );
     }
 
-    PMethodDef findMethod( char[] aName ){
+    PMethodDef findMethod( const(char)[] aName ){
         PMethodDef res = null;
         foreach( PMethodDef mth; mMethods ){
             if( mth.mName == aName ){
@@ -950,7 +948,7 @@ class PInterfaceDef : PTypeDef {
         assert( res !is null, toUtf8 );
         return res;
     }
-    override PTypeDef findChildTypeDef(char[] aName){
+    override PTypeDef findChildTypeDef(const(char)[] aName){
         foreach (PTypeDef p; mTypeDefs) {
             //Stdout.formatln("Pinterface findchilddtype{0} {1}", p.mName, aName);
             if (p.mName == aName) {
@@ -960,7 +958,7 @@ class PInterfaceDef : PTypeDef {
         return(super.findChildTypeDef(aName));
     }
 
-    bool isCompatibleTo(PTypeDef aTypeDef, bool aIsArray){
+    override int isCompatibleTo(PTypeDef aTypeDef, bool aIsArray){
         if (aTypeDef is gBuildinTypeNull) {
             return( EXACT_MATCH );
         }
@@ -991,12 +989,12 @@ class PInterfaceDef : PTypeDef {
     // 1 == byte, short, char -> int, float -> double
     // 2 == byte, short, char, int -> long
     const int MAX_RESOLVE_LEVEL = 3;
-    override PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    override PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
         static int callCnt = 0;
         callCnt++;
         PCtor[] bestMatches;
         int     bestMatchIdx;
-        char[] logName = "1";
+        string logName = "1";
 
         if( aName == logName ) Stdout.formatln( "---- {0}", callCnt );
 
@@ -1149,13 +1147,13 @@ print:
         //assert( false, Layouter( "class {0} searched method {1}", toUtf8(), aName ) );
         //return(null);
     }
-    override char[]            toUtf8(){
+    override const(char)[] toUtf8() @trusted{
         return(Layouter("[PInterfaceDef mName={0}]", mName));
     }
 }
 class AliasFunction{
     PClassDef mClassDef;
-    char[]    mName;
+    string mName;
 }
 class PClassDef : PInterfaceDef {
     mixin PartStdImpl!true;
@@ -1171,7 +1169,7 @@ class PClassDef : PInterfaceDef {
     PFieldDef         mOuter;
     AliasFunction[]   mAliases;
 
-    public this( PModule aModule ){
+    this( PModule aModule ){
         super( aModule );
         // every class has a this ptr
         mThis                                     = new PFieldDef( aModule );
@@ -1185,7 +1183,7 @@ class PClassDef : PInterfaceDef {
         //mClass.mTypeInst.mTypeRef.mResolvedTypeDef = ??;
     }
 
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         foreach (PFieldDef v; mFields) {
             //Stdout.formatln( "{0} : compare fieldname {1} == {2}", toUtf8(), v.mName, aName );
             if (v.mName == aName) {
@@ -1203,7 +1201,7 @@ class PClassDef : PInterfaceDef {
         return(null);
     }
 
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         foreach (PFieldDef v; mFields) {
             //Stdout.formatln( "{0} : compare fieldname {1} == {2}", toUtf8(), v.mName, aName );
             if (v.mName == aName) {
@@ -1221,7 +1219,7 @@ class PClassDef : PInterfaceDef {
         return(null);
     }
 
-    PMethodDef createMethod( char[] aName ){
+    PMethodDef createMethod( const(char)[] aName ){
         PMethodDef res = new PMethodDef;
         res.mName = aName;
         res.mModifiers = new PModifiers;
@@ -1229,7 +1227,7 @@ class PClassDef : PInterfaceDef {
         return res;
     }
 
-    override bool isCompatibleTo(PTypeDef aTypeDef, bool aIsArray){
+    override int isCompatibleTo(PTypeDef aTypeDef, bool aIsArray){
         if (aTypeDef is gBuildinTypeNull) {
             return( EXACT_MATCH);
         }
@@ -1262,7 +1260,7 @@ class PClassDef : PInterfaceDef {
         return(bestMatch);
     }
 
-    //PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    //PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
     //    PCallable res = null;
 
     //    for( int i = 0; i < MAX_RESOLVE_LEVEL; i++ ){
@@ -1287,16 +1285,16 @@ class PClassDef : PInterfaceDef {
     //    assert(false);
     //    return(res);
     //}
-    override char[]            toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("[PClassDef fqn={0}]", getFqn()));
     }
 }
 
 class PObjectClassDef : PClassDef {
-    public this( PModule m ){
+    this( PModule m ){
         super(m);
     }
-    public override char[] getFqn( bool excludeModule = false ){
+    override const(char)[] getFqn( bool excludeModule = false ){
         return "Object";
     }
 }
@@ -1305,9 +1303,9 @@ class PCallable : PStatement {
     mixin PartStdImpl!true;
     PModifiers mModifiers;
     PStatList  mStatList;
-    char[]     mName;
+    const(char)[]     mName;
 
-    public this(){
+    this(){
         mModifiers = new PModifiers;
     }
 }
@@ -1321,11 +1319,11 @@ class PCtor : PCallable {
     mixin PartStdImpl!true;
     PParameterDef[] mParams;
 
-    public this(){
+    this(){
         mName = "this";
     }
 
-    public bool hasEqualSignature( PCtor a ){
+    bool hasEqualSignature( PCtor a ){
         if( mName != a.mName ){
             return false;
         }
@@ -1342,7 +1340,7 @@ class PCtor : PCallable {
         return true;
     }
 
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         foreach (PParameterDef v; mParams) {
             if (v.mName == aName) {
                 return(v.mTypeInst);
@@ -1353,7 +1351,7 @@ class PCtor : PCallable {
         }
         return(null);
     }
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         foreach (PParameterDef v; mParams) {
             if (v.mName == aName) {
                 return(v);
@@ -1364,15 +1362,15 @@ class PCtor : PCallable {
         }
         return(null);
     }
-    override PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    override PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
         return(null);
     }
 
-    override char[]          toUtf8(){
-        char[] res = "PCtor ( ";
-        foreach ( uint tiIdx, PParameterDef pd; mParams) {
+    override const(char)[] toUtf8() @trusted {
+        string res = "PCtor ( ";
+        foreach ( ulong tiIdx, PParameterDef pd; mParams) {
             Stdout.print( !tiIdx ? "" : ", ");
-            res ~= pd.mTypeInst.toUtf8();
+            res ~= pd.mTypeInst.toUtf8().idup;
         }
         res ~= ")";
         return(res);
@@ -1383,9 +1381,9 @@ class PMethodDef : PCtor {
     PTypeInst mReturnType;
     PModule mModuleFunc = null;
     bool mIsNestedFunc = false;
-    char[][] mComments;
+    const(char)[][] mComments;
 
-    public this(){
+    this(){
         mName = "<unknow>";
     }
 
@@ -1401,7 +1399,7 @@ class PMethodDef : PCtor {
         return(result);
     }
 
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         foreach (PParameterDef v; mParams) {
             if (v.mName == aName) {
                 return(v.mTypeInst);
@@ -1412,7 +1410,7 @@ class PMethodDef : PCtor {
         }
         return(null);
     }
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         foreach (PParameterDef v; mParams) {
             if (v.mName == aName) {
                 return(v);
@@ -1424,20 +1422,25 @@ class PMethodDef : PCtor {
         return(null);
     }
 
-    public override hash_t toHash(){
+    override hash_t toHash() nothrow {
         hash_t hash;
-        foreach (char c; toUtf8())
-            hash = hash * 9 + c;
-        return hash;
+	try
+	{
+		auto s = toUtf8();
+		foreach (char c; toUtf8())
+		    hash = hash * 9 + c;
+		return hash;
+	}
+	catch(Exception e)
+	assert(0, "error calculating hash");
     }
 
-    override char[]    toUtf8(){
-        char[] res;
-        res = Layouter("[PMethodDef {0}{1} {2}(", mModifiers.getString(), mReturnType.getString(), mName);
+    override const(char)[]    toUtf8() @trusted {
+        auto res = Layouter("[PMethodDef {0}{1} {2}(", mModifiers.getString(), mReturnType.getString(), mName);
         bool   first = true;
         foreach (PParameterDef pd; mParams) {
             res ~= first ? " " : ", ";
-            res ~= pd.getString();
+            res ~= pd.getString().idup;
             first = false;
         }
         res ~= " )]";
@@ -1450,7 +1453,7 @@ class PParameterDef : PStatement {
     mixin PartStdImpl!true;
     PModifiers      mModifiers;
     PTypeInst       mTypeInst;
-    char[]          mName;
+    const(char)[]          mName;
     PModule         mModule;
     bool            mIsVariableLength;
 
@@ -1459,7 +1462,7 @@ class PParameterDef : PStatement {
         mModifiers = new PModifiers;
     }
 
-    this( PModule aModule, char[] aName, PTypeInst aTi ){
+    this( PModule aModule, const(char)[] aName, PTypeInst aTi ){
         mModule = aModule;
         mModifiers = new PModifiers;
         mName = aName;
@@ -1474,11 +1477,11 @@ class PParameterDef : PStatement {
         result.mModifiers = mModifiers.clone();
         return(result);
     }
-    char[]          getString(){
-        char[] varLengthStr = mIsVariableLength ? "..." : "";
+    const(char)[]          getString(){
+        auto varLengthStr = mIsVariableLength ? "..." : "";
         return(Layouter("{0}{1}{2} {3}", mModifiers.getString(), mTypeInst.getString(), varLengthStr, mName));
     }
-    override char[]          toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("[PParameterDef {0}]", mName));
     }
     bool isSameType( PParameterDef other ){
@@ -1490,7 +1493,7 @@ class PParameterDef : PStatement {
         }
         return true;
     }
-    //public override int opEquals( Object o ){
+    //override int opEquals( Object o ){
     //    PParameterDef t = cast(PParameterDef)o;
     //    if( t is null ){
     //        return false;
@@ -1539,7 +1542,7 @@ class PExpr : PStatement {
     mixin PartStdImpl!true;
     bool      mAsStatement;
     PTypeInst mResolvedTypeInst;
-    override char[]    toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("PExpr");
     }
 }
@@ -1557,7 +1560,7 @@ class PExprVarRef : PExpr {
         mParameterDef = aParameterDef;
         mResolvedTypeInst = aParameterDef.mTypeInst;
     }
-    override char[]        toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return( Layouter( "[PExprVarRef ref:{0}", mParameterDef.toUtf8() ));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1578,7 +1581,7 @@ class PExprFncRef : PExpr {
     this( PMethodDef aMethodDef){
         mMethodDef = aMethodDef;
     }
-    override char[]        toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return( Layouter( "[PExprFncRef ref:{0}", mMethodDef.toUtf8() ));
     }
 }
@@ -1587,24 +1590,24 @@ class PExprTypeInst : PExpr {
     mixin PartStdImpl!true;
 
     PExpr[]   mTypeArguments;
-    public this(){
+    this(){
     }
-    public this( PTypeInst ti ){
+    this( PTypeInst ti ){
         mResolvedTypeInst = ti;
     }
 
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("PExprTypeInst " ~ mResolvedTypeInst.toUtf8());
     }
 }
 
 class PExprIdent : PExpr {
     mixin PartStdImpl!true;
-    char[]        mName;
+    const(char)[]        mName;
     bool          mAllowNonResolve; // for the case, this is a part of fqn, so it is not a type and can be not resolved.
     PParameterDef mParameterDef;
 
-    override char[]        toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("PExprIdent " ~ mName);
     }
 }
@@ -1616,7 +1619,7 @@ class PExprDot : PExpr {
     // if this part of a fqn is a package reference
     PPackage mResolvedPackage;
 
-    override char[]   toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("PExprDot: " ~ mLExpr.toUtf8 ~ "/" ~ mRExpr.toUtf8);
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1633,14 +1636,14 @@ class PExprDot : PExpr {
 }
 class PExprMethodCall : PExpr {
     mixin PartStdImpl!true;
-    char[]    mName;
+    const(char)[]    mName;
     PExpr     mTrgExpr;
     PExpr[]   mTypeArguments;
     PExpr[]   mArguments;
     PCallable mResolvedCallable;
 
-    override char[]    toUtf8(){
-        char[] name = mName is null ? mResolvedCallable.mName : mName;
+    override const(char)[] toUtf8() @trusted {
+        auto  name = mName is null ? mResolvedCallable.mName.idup : mName.idup;
         return( Layouter( "[PExprMethodCall: {0}]", name));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1648,7 +1651,7 @@ class PExprMethodCall : PExpr {
             mTrgExpr = aNewExpr;
             return;
         }
-        foreach (inout PExpr arg; mArguments) {
+        foreach (arg; mArguments) {
             if (arg is aChild) {
                 arg = aNewExpr;
                 return;
@@ -1657,7 +1660,7 @@ class PExprMethodCall : PExpr {
         assert(false, toUtf8());
     }
 
-    //public void resolveMethod(){
+    //void resolveMethod(){
     //    PTypeInst[] tis;
     //    foreach( PExpr e; mArguments ){
     //        tis ~= e.mResolvedTypeInst;
@@ -1672,7 +1675,7 @@ class PExprQuestion : PExpr {
     PExpr  mTCase;
     PExpr  mFCase;
 
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprQuestion ({0}) ? ({1}) : ({2}): ", mCond.toUtf8, mTCase.toUtf8, mFCase.toUtf8));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1695,7 +1698,7 @@ class PExprInstanceof : PExpr {
     mixin PartStdImpl!true;
     PExpr     mExpr;
     PTypeInst mTypeInst;
-    override char[]    toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprInstanceof ({0}) instanceof ({2})", mExpr.toUtf8, mTypeInst.toUtf8));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1708,10 +1711,10 @@ class PExprInstanceof : PExpr {
 }
 class PExprBinary : PExpr {
     mixin PartStdImpl!true;
-    char[] mOp;
+    const(char)[] mOp;
     PExpr  mLExpr;
     PExpr  mRExpr;
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprBinary ({0}) {1} ({2})", mLExpr.toUtf8, mOp, mRExpr.toUtf8));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1728,10 +1731,10 @@ class PExprBinary : PExpr {
 }
 class PExprUnary : PExpr {
     mixin PartStdImpl!true;
-    char[] mOp;
+    const(char)[] mOp;
     bool   mPost;
     PExpr  mExpr;
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter(mPost ? "PExprPost ({0}){1}" : "PExprPost {1}({0})", mExpr.toUtf8, mOp));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1747,11 +1750,11 @@ class PExprNew : PExpr {
     PTypeRef mTypeRef;
     PExpr[]  mArguments;
     PCtor    mResolvedCtor;
-    override char[]   toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprNew "));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
-        foreach (inout PExpr arg; mArguments) {
+        foreach (PExpr arg; mArguments) {
             if (arg is aChild) {
                 arg = aNewExpr;
                 return;
@@ -1759,7 +1762,7 @@ class PExprNew : PExpr {
         }
         assert(false);
     }
-    public void resolveCtor(){
+    void resolveCtor(){
         PTypeInst[] tis;
         foreach( PExpr e; mArguments ){
             tis ~= e.mResolvedTypeInst;
@@ -1773,14 +1776,14 @@ class PExprNewArray : PExpr {
     PTypeRef      mTypeRef;
     PArrayDecl[]  mArrayDecls;
     PVarInitArray mInitializer;
-    override char[]        toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprNewArray "));
     }
 }
 class PArrayDecl : PPart {
     mixin PartStdImpl!true;
     PExpr  mCount;
-    char[] toUtf8(){
+    const(char)[] toUtf8() @trusted {
         return(Layouter("PArrayDecl "));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1795,16 +1798,16 @@ class PArrayDecl : PPart {
 class PExprNewAnon : PExprNew {
     mixin PartStdImpl!true;
     PClassDef mClassDef;
-    override char[]    toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprNewAnon "));
     }
 }
 class PExprAssign : PExpr {
     mixin PartStdImpl!true;
-    char[] mOp;
+    const(char)[] mOp;
     PExpr  mLExpr;
     PExpr  mRExpr;
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("[PExprAssign mLExpr={0} mOp='{1}' mRExpr={2}]", mLExpr.toUtf8(), mOp, mRExpr.toUtf8()));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1824,7 +1827,7 @@ class PExprIndexOp : PExpr {
     mixin PartStdImpl!true;
     PExpr  mRef;
     PExpr  mIndex;
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("[PExprIndexOp]"));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1844,7 +1847,7 @@ class PExprTypecast : PExpr {
     mixin PartStdImpl!true;
     PExpr     mExpr;
     PTypeInst mTypeInst;
-    override char[]    toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprTypecast "));
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1873,8 +1876,8 @@ enum LiteralType : int {
 class PExprLiteral : PExpr {
     mixin PartStdImpl!true;
     LiteralType mType;
-    char[]      mText;
-    override char[]      toUtf8(){
+    const(char)[]      mText;
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PExprLiteral text:{0} type:{1}", mText, cast(int)mType));
     }
 }
@@ -1884,7 +1887,7 @@ abstract class PVarInitializer : PExpr {
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
         assert(false);
     }
-    override char[]      toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PVarInitializer "));
     }
 }
@@ -1893,10 +1896,10 @@ class PVarInitExpr : PVarInitializer {
     mixin PartStdImpl!true;
     PExpr mExpr;
 
-    public this(){
+    this(){
     }
 
-    public this( PExpr e ){
+    this( PExpr e ){
         mExpr = e;
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1906,7 +1909,7 @@ class PVarInitExpr : PVarInitializer {
         }
         assert(false);
     }
-    override char[]      toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return(Layouter("PVarInitExpr {0}", mExpr.toUtf8() ));
     }
 }
@@ -1924,7 +1927,7 @@ class PVarInitArray : PVarInitializer {
         }
         assert(false);
     }
-    override char[]      toUtf8(){
+    override const(char)[]  toUtf8() @trusted {
         return(Layouter("PVarInitArray "));
     }
 }
@@ -1934,22 +1937,22 @@ class PVarInitArray : PVarInitializer {
 abstract class PStatement : PPart, IScope {
     mixin PartStdImpl!(true);
 
-    PPackage findChildPackage(char[] aName){
+    PPackage findChildPackage(const(char)[] aName){
         return(null);
     }
-    PTypeDef findChildTypeDef(char[] aName){
+    PTypeDef findChildTypeDef(const(char)[] aName){
         return(null);
     }
     PTypeDef findOuterTypeDef(){
         return(null);
     }
-    PTypeInst findTypeInst(char[] aName){
+    PTypeInst findTypeInst(const(char)[] aName){
         return(null);
     }
-    PParameterDef findParameterDef(char[] aName){
+    PParameterDef findParameterDef(const(char)[] aName){
         return(null);
     }
-    PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
         return(null);
     }
     override void exchangeExpr(PExpr aChild, PExpr aNewExpr){
@@ -1958,7 +1961,7 @@ abstract class PStatement : PPart, IScope {
     override void exchangeStat(PStatement aChild, PStatement aNewStat){
         assert(false, toUtf8 );
     }
-    char[] toUtf8(){
+    const(char)[] toUtf8() @trusted {
         return("");
     }
 }
@@ -1969,7 +1972,7 @@ class PStatList : PStatement {
     bool         mWithoutScope;
 
 
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         foreach (PStatement s; mStats) {
             if (PParameterDef pd = cast(PParameterDef)s) {
                 if (pd.mName == aName) {
@@ -1979,7 +1982,7 @@ class PStatList : PStatement {
         }
         return(null);
     }
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         foreach (PStatement s; mStats) {
             if (PParameterDef pd = cast(PParameterDef)s) {
                 if (pd.mName == aName) {
@@ -1989,7 +1992,7 @@ class PStatList : PStatement {
         }
         return(null);
     }
-    override PCallable findCallable(char[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
+    override PCallable findCallable(const(char)[] aName, PTypeInst[] aArgTypes, bool aIsInstance){
         return(null);
     }
 
@@ -1998,7 +2001,7 @@ class PStatList : PStatement {
     }
 
     override void exchangeStat(PStatement aChild, PStatement aNewStat){
-        foreach (inout PStatement s; mStats) {
+        foreach (PStatement s; mStats) {
             if (s is aChild) {
                 s = aNewStat;
                 return;
@@ -2006,23 +2009,23 @@ class PStatList : PStatement {
         }
         assert(false);
     }
-    override char[]       toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatList]");
     }
 }
 
 class PStatGoto : PStatement {
     mixin PartStdImpl!true;
-    char[]     mName;
-    override char[]     toUtf8(){
+    const(char)[]     mName;
+    override const(char)[]  toUtf8() @trusted {
         return("[PStatGoto]");
     }
 }
 class PStatLabeled : PStatement {
     mixin PartStdImpl!true;
-    char[]     mName;
+    const(char)[]     mName;
     PStatement mStat;
-    override char[]     toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatLabeled]");
     }
 }
@@ -2059,7 +2062,7 @@ class PStatIf : PStatement {
         }
         assert(false);
     }
-    override char[]     toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatIf]");
     }
 }
@@ -2071,7 +2074,7 @@ class PStatFor : PStatement {
     PExpr[]    mIterator;
     PStatement mStat;
 
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         foreach (PVarDef v; mInit_VarDefs) {
             if (v.mName == aName) {
                 return(v.mTypeInst);
@@ -2079,7 +2082,7 @@ class PStatFor : PStatement {
         }
         return(null);
     }
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         foreach (PVarDef v; mInit_VarDefs) {
             if (v.mName == aName) {
                 return(v);
@@ -2093,13 +2096,13 @@ class PStatFor : PStatement {
             mCondition = aNewExpr;
             return;
         }
-        foreach (inout PExpr e; mInit_Exprs) {
+        foreach (PExpr e; mInit_Exprs) {
             if (e is aChild) {
                 e = aNewExpr;
                 return;
             }
         }
-        foreach (inout PExpr e; mIterator) {
+        foreach (PExpr e; mIterator) {
             if (e is aChild) {
                 e = aNewExpr;
                 return;
@@ -2112,7 +2115,7 @@ class PStatFor : PStatement {
         }
         assert(false);
     }
-    override char[]     toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatFor]");
     }
 }
@@ -2122,13 +2125,13 @@ class PStatForeach : PStatement {
     PExpr         mRange;
     PStatement    mStat;
 
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         if (mParam.mName == aName) {
             return(mParam.mTypeInst);
         }
         return(null);
     }
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         if (mParam.mName == aName) {
             return(mParam);
         }
@@ -2141,7 +2144,7 @@ class PStatForeach : PStatement {
         }
         assert(false);
     }
-    override char[]        toUtf8(){
+    override const(char)[]  toUtf8() @trusted {
         return("[PStatForeach]");
     }
 }
@@ -2161,7 +2164,7 @@ class PStatWhile : PStatement {
         }
         assert(false);
     }
-    override char[]     toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatWhile]");
     }
 }
@@ -2181,21 +2184,21 @@ class PStatDo : PStatement {
         }
         assert(false);
     }
-    override char[]     toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatDo]");
     }
 }
 class PStatBreak : PStatement {
     mixin PartStdImpl!true;
-    char[] mName;
-    override char[] toUtf8(){
+    const(char)[] mName;
+    override const(char)[] toUtf8() @trusted {
         return("[PStatBreak]");
     }
 }
 class PStatContinue : PStatement {
     mixin PartStdImpl!true;
-    char[] mName;
-    override char[] toUtf8(){
+    const(char)[] mName;
+    override const(char)[] toUtf8() @trusted {
         return("[PStatContinue]");
     }
 }
@@ -2209,7 +2212,7 @@ class PStatReturn : PStatement {
         }
         assert(false);
     }
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatReturn]");
     }
 }
@@ -2229,7 +2232,7 @@ class PStatSwitch : PStatement {
         }
         assert(false);
     }
-    override char[]       toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatSwitch]");
     }
 }
@@ -2238,7 +2241,7 @@ class PCaseGroup {
     PExpr[]   mCases;
     PStatList mTodo;
     bool exchangeExpr(PExpr aChild, PExpr aNewExpr){
-        foreach (inout PExpr e; mCases) {
+        foreach (PExpr e; mCases) {
             if (e is aChild) {
                 e = aNewExpr;
                 return(true);
@@ -2258,7 +2261,7 @@ class PStatThrow : PStatement {
         }
         assert(false);
     }
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatThrow]");
     }
 }
@@ -2273,7 +2276,7 @@ class PStatSynchronized : PStatement {
         }
         assert(false);
     }
-    override char[]     toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatSynchronized]");
     }
 }
@@ -2282,7 +2285,7 @@ class PStatTry : PStatement {
     PStatList    mTodo;
     PStatCatch[] mHandlers;
     PStatFinally mFinally;
-    override char[]       toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatTry]");
     }
 }
@@ -2291,26 +2294,26 @@ class PStatCatch : PStatement {
     PParameterDef mParam;
     PStatList     mTodo;
 
-    override PTypeInst findTypeInst(char[] aName){
+    override PTypeInst findTypeInst(const(char)[] aName){
         if (mParam.mName == aName) {
             return(mParam.mTypeInst);
         }
         return(super.findTypeInst(aName));
     }
-    override PParameterDef findParameterDef(char[] aName){
+    override PParameterDef findParameterDef(const(char)[] aName){
         if (mParam.mName == aName) {
             return(mParam);
         }
         return(super.findParameterDef(aName));
     }
-    override char[]        toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatCatch]");
     }
 }
 class PStatFinally : PStatement {
     mixin PartStdImpl!true;
     PStatList mTodo;
-    override char[]    toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatFinally]");
     }
 }
@@ -2329,7 +2332,7 @@ class PStatAssert : PStatement {
         }
         assert(false);
     }
-    override char[] toUtf8(){
+    override const(char)[] toUtf8() @trusted {
         return("[PStatAssert]");
     }
 }

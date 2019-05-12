@@ -62,7 +62,7 @@ bool getImplementation(){
 }
 char[] mMixinTree;
 
-bool readXmlFile(char[] aFilename, Document aDocument){
+bool readXmlFile(const(char)[] aFilename, Document aDocument){
 
     FilePath aFilePath = new FilePath( aFilename );
 
@@ -78,7 +78,7 @@ bool readXmlFile(char[] aFilename, Document aDocument){
             }
             void endDocument() {
             }
-            void startElement(char[] name) {
+            void startElement(const(char)[] name) {
 
                 Element el;
                 if( mElements.size() > 0 ){
@@ -90,11 +90,11 @@ bool readXmlFile(char[] aFilename, Document aDocument){
                     mElements.prepend( el );
                 }
             }
-            void addAttribute(char[] key, char[] value) {
+            void addAttribute(const(char)[] key, const(char)[] value) {
                 Element el = mElements.head();
                 el.addAttribute(key.dup, value.dup);
             }
-            void endElement(char[] name) {
+            void endElement(const(char)[] name) {
                 Element child = mElements.take();
                 char[] child_name = child.getName();
                 child.completeYourself();
@@ -106,7 +106,7 @@ bool readXmlFile(char[] aFilename, Document aDocument){
                     aDocument.completeRootElement( child_name, child );
                 }
             }
-            void characterData (char[] data, CDataStatus status) {
+            void characterData (const(char)[] data, CDataStatus status) {
                 Element el = mElements.head();
                 el.characterData( data );
             }
@@ -118,24 +118,24 @@ bool readXmlFile(char[] aFilename, Document aDocument){
     return(true);
 }
 
-void usage(char[] aCommand){
+void usage(const(char)[] aCommand){
     Stdout.formatln("Usage: {0} <cfg-tioport.xml>", aCommand);
 }
 
 char[] ddir = ".".dup;
 private bool   writeInternals = false;
 
-public char[] getDDir(){
+char[] getDDir(){
     return ddir.dup;
 }
 
-int main(char[][] aArgs){
-
+int main(string[] args)
+{
     if (aArgs.length != 2) {
         usage(aArgs[0]);
         return(1);
     }
-    char[]       cfgName = aArgs[1];
+    char[]       cfgName = aArgs[1].dup;
 
     CfgDocument  cfgdoc = new CfgDocument();
     if (!readXmlFile(cfgName, cfgdoc)) {
@@ -156,7 +156,7 @@ int main(char[][] aArgs){
 
     writeInternals = root.getAttribute( "writeinternals" ) == "true";
 
-    char[] extractAttr( char[] id ){
+    char[] extractAttr( const(char)[] id ){
         if( ! root.hasAttribute( id )){
             throw new Exception( "the configuration root element needs the attribute "~id );
         }
@@ -268,7 +268,7 @@ class CfgDocument : Document {
 class JDocument : Document {
     private EJava mRoot;
 
-    public override Element createRootElement(char[] aName){
+    override Element createRootElement(const(char)[] aName){
         assert(aName == "java");
         EJava e = new EJava(aName, null);
         setRoot(e);
@@ -282,7 +282,7 @@ class JDocument : Document {
 }
 
 template StdImpl(){
-    public this(char[] aName, Element aParent){
+    this(const(char)[] aName, Element aParent){
         super(aName, aParent);
     }
 }
@@ -293,7 +293,7 @@ class JElement : Element {
     }
 
 
-    public this(char[] aName, Element aParent){
+    this(const(char)[] aName, Element aParent){
         super(aName, aParent);
     }
 
@@ -370,7 +370,7 @@ class JElement : Element {
         Ident    i  = makeIdentifier(c);
         PTypeRef tr = new PTypeRef;
 
-        foreach (char[] str; i.mIdents) {
+        foreach ( str; i.mIdents) {
             PTypeRefPart trp = new PTypeRefPart;
             trp.mText = str;
             tr.mParts ~= trp;
@@ -382,7 +382,7 @@ class JElement : Element {
         return(e.getAttribute("text"));
     }
 
-    public override Element createChildElement(char[] aName){
+    override Element createChildElement(const(char)[] aName){
         switch (aName) {
         case "EMPTY_STAT":
             return(new EEmptyStat(aName, this));
@@ -639,12 +639,12 @@ class JElement : Element {
 PModule currentModule;
 
 class EJava : JElement {
-    public char[] mModName;
-    public char[] mModPath;
+    char[] mModName;
+    char[] mModPath;
 
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
-    PModule buildParts(PRootPackage aPackageRoot, char[] aModuleName){
+    PModule buildParts(PRootPackage aPackageRoot, const(char)[] aModuleName){
         EPackageDef epackdef = cast(EPackageDef)getFirstChild();
 
         PPackage ppack = buildPackages(aPackageRoot, epackdef);
@@ -689,11 +689,11 @@ class EJava : JElement {
 }
 
 class EPackageDef : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class EEmptyStat : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         PExpr e = new PExpr();
         e.mAsStatement = true;
@@ -702,7 +702,7 @@ class EEmptyStat : EStat {
 }
 
 class ELabeledStat : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PVarDef getPartStatement(){
         PStatLabeled stat = new PStatLabeled;
 
@@ -713,11 +713,11 @@ class ELabeledStat : EStat {
 }
 
 class EAnnotations : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class EImport : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     PImport buildImportDef(){
         IdentStar i = makeIdentifierStar(getFirstChild);
@@ -727,7 +727,7 @@ class EImport : JElement {
 }
 
 class ETypeDef : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     PTypeDef buildTypeDef( PModule aModule ){
         switch (getName()) {
@@ -816,11 +816,11 @@ class ETypeDef : JElement {
     }
 }
 class EClassDef : ETypeDef {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class EInterfaceDef : ETypeDef {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     PInterfaceDef getPartInterfaceDef( PModule aModule ){
         PInterfaceDef def = new PInterfaceDef(aModule);
         def.mModule = aModule;
@@ -850,19 +850,19 @@ class EInterfaceDef : ETypeDef {
 }
 
 class EEnumDef : ETypeDef {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class EEnumConstantDef : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class EAnnotationDef : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class EObjBlock : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     void fillPartClassDef(PClassDef classDef){
         foreach( JElement child; cast(JElement[]) getChilds() ){
             char[] type = child.getName();
@@ -953,7 +953,7 @@ class EObjBlock : JElement {
 }
 
 class EVariableDef : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     PFieldDef buildPartField(){
         PFieldDef fld = new PFieldDef( currentModule );
@@ -1012,7 +1012,7 @@ class EVariableDef : EStat {
 }
 
 class EModifiers : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     bool       mExternC    = false;
     bool       mAllowConst = false;
     enum Visibility {
@@ -1047,7 +1047,7 @@ class EModifiers : JElement {
 }
 
 class ECtorDef : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     PCtor buildPartCtor(){
         PCtor ctor = new PCtor;
 
@@ -1070,11 +1070,11 @@ class ECtorDef : JElement {
 }
 
 class EParameters : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class EParameterDef : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     PParameterDef getPartParameterDef(){
         PParameterDef p = new PParameterDef( currentModule );
 
@@ -1092,7 +1092,7 @@ void appendNotNull( T, E )( inout T t, E e ){
     }
 }
 class ESList : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatList getPartStatement(){
         PStatList p = new PStatList;
 
@@ -1108,7 +1108,7 @@ class ESList : EStat {
 }
 
 class EMethodDef : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     override PStatement getPartStatement(){
         return(buildPartMethodDef( false ));
@@ -1136,7 +1136,7 @@ class EMethodDef : EStat {
 }
 
 class EArrayInit : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     PVarInitArray getPartVarInitArray(){
         PVarInitArray ia = new PVarInitArray();
@@ -1161,7 +1161,7 @@ class EArrayInit : JElement {
 }
 
 class EType : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     PTypeInst getPartTypeInst(){
         PTypeInst ti = new PTypeInst;
@@ -1172,7 +1172,7 @@ class EType : JElement {
             ti.mDimensions++;
             cur = cast(JElement)cur.getFirstChild();
         }
-        void makeSimpleType(char[] aName) {
+        void makeSimpleType(const(char)[] aName) {
             ti.mTypeRef = new PTypeRef;
             PTypeRefPart trp = new PTypeRefPart;
             trp.mText = aName;
@@ -1205,7 +1205,7 @@ class EType : JElement {
         return(ti);
     }
 
-    public override Element createChildElement(char[] aName){
+    override Element createChildElement(const(char)[] aName){
         switch (aName) {
         case "ARRAY_DECLARATOR":
             return(new EArrayDeclarator(aName, this));
@@ -1217,7 +1217,7 @@ class EType : JElement {
 }
 
 class EStaticInit : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         return buildPartStaticInit();
     }
@@ -1234,7 +1234,7 @@ class EStaticInit : EStat {
 }
 
 class EInstanceInit : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     override PStatement getPartStatement(){
         return buildPartInstanceInit();
@@ -1250,28 +1250,28 @@ class EInstanceInit : EStat {
 }
 
 class ETypeParameters : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class ETypeParameter : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class ETypeArguments : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class ETypeArgument : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 abstract class EExpression : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     abstract PExpr getPartExpr();
 }
 
 class EExpr : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     PVarInitExpr getPartVarInitExpr(){
         PVarInitExpr ie = new PVarInitExpr;
 
@@ -1291,7 +1291,7 @@ class EExpr : EStat {
         return(e.getPartExpr());
     }
 
-    public override Element createChildElement(char[] aName){
+    override Element createChildElement(const(char)[] aName){
         switch (aName) {
         case "ARRAY_DECLARATOR":
             return(new EArrayDeclarator(aName, this));
@@ -1303,7 +1303,7 @@ class EExpr : EStat {
 }
 
 class EEList : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     PExpr[] getPartEList(){
         PExpr[] res;
@@ -1315,7 +1315,7 @@ class EEList : JElement {
 }
 
 class ESynchronized : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatSynchronized getPartStatement(){
         PStatSynchronized stat = new PStatSynchronized;
 
@@ -1326,7 +1326,7 @@ class ESynchronized : EStat {
 }
 
 class EAssert : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatAssert getPartStatement(){
         PStatAssert stat = new PStatAssert;
 
@@ -1339,7 +1339,7 @@ class EAssert : EStat {
 }
 
 class EReturn : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatReturn getPartStatement(){
         PStatReturn stat = new PStatReturn;
 
@@ -1352,7 +1352,7 @@ class EReturn : EStat {
 
 
 class ELiteralTry : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatTry getPartStatement(){
         PStatTry stat = new PStatTry;
 
@@ -1370,7 +1370,7 @@ class ELiteralTry : EStat {
 }
 
 class ELiteralCatch : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatCatch getPartStatement(){
         PStatCatch stat = new PStatCatch;
 
@@ -1381,7 +1381,7 @@ class ELiteralCatch : EStat {
 }
 
 class ELiteralFinally : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatFinally getPartStatement(){
         PStatFinally stat = new PStatFinally;
 
@@ -1391,12 +1391,12 @@ class ELiteralFinally : EStat {
 }
 
 class EStat : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     abstract PStatement getPartStatement();
 }
 
 class ELiteralIf : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         Element[] childs = getChilds();
         EExpr     cond   = cast(EExpr)childs[0];
@@ -1416,7 +1416,7 @@ class ELiteralIf : EStat {
 }
 
 class ELiteralFor : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     override PStatement getPartStatement(){
         Element c = getFirstChild();
@@ -1476,7 +1476,7 @@ class ELiteralFor : EStat {
 }
 
 class ELiteralSwitch : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         PStatSwitch stat = new PStatSwitch;
 
@@ -1489,7 +1489,7 @@ class ELiteralSwitch : EStat {
 }
 
 class ECaseGroup : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     PCaseGroup getPartCaseGroup(){
         PCaseGroup cg = new PCaseGroup;
 
@@ -1522,7 +1522,7 @@ class ECaseGroup : JElement {
 }
 
 class ELiteralBreakContinue : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         if (getName() == "LITERAL_break") {
             PStatBreak stat = new PStatBreak;
@@ -1543,7 +1543,7 @@ class ELiteralBreakContinue : EStat {
 }
 
 class ELiteralDo : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         PStatDo stat = new PStatDo;
 
@@ -1554,7 +1554,7 @@ class ELiteralDo : EStat {
 }
 
 class ELiteralWhile : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         PStatWhile stat = new PStatWhile;
         assert( getChildCount == 2 );
@@ -1570,7 +1570,7 @@ class ELiteralWhile : EStat {
 
 
 class EExprAssign : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         PExprAssign   ex = new PExprAssign;
 
@@ -1599,7 +1599,7 @@ class EExprAssign : EExpression {
 }
 
 class EExprQuestion : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         EExpression[] childs = cast(EExpression[])getChilds();
         PExprQuestion ex     = new PExprQuestion;
@@ -1611,7 +1611,7 @@ class EExprQuestion : EExpression {
 }
 
 class EExprBinary : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         char[] op = getAttribute("text");
         if( op != "instanceof" ){
@@ -1633,7 +1633,7 @@ class EExprBinary : EExpression {
 }
 
 class EExprUnary : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         EExpression child = cast(EExpression)getFirstChild();
 
@@ -1655,7 +1655,7 @@ class EExprUnary : EExpression {
 }
 
 class EExprIndexOp : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         Element[]    childs = getChilds();
         EExpression  eref   = cast(EExpression)childs[0];
@@ -1668,7 +1668,7 @@ class EExprIndexOp : EExpression {
 }
 
 class ECtorCall : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         if (getName() == "CTOR_CALL") {
             PExprMethodCall expr = new PExprMethodCall;
@@ -1699,7 +1699,7 @@ class ECtorCall : EStat {
 }
 
 class EExprMethodCall : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         PExprMethodCall ex    = new PExprMethodCall;
         EExpression     priex = cast(EExpression)getFirstChild();
@@ -1723,7 +1723,7 @@ class EExprMethodCall : EExpression {
 }
 
 class EExprTypeCast : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         PExprTypecast ex   = new PExprTypecast;
         PExpr         expr = (cast(EExpression)getChild(1)).getPartExpr();
@@ -1736,7 +1736,7 @@ class EExprTypeCast : EExpression {
 }
 
 class EExprNew : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         Element  c = getFirstChild();
 
@@ -1776,11 +1776,11 @@ class EExprNew : EExpression {
 }
 
 class EArrayDeclarator : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 }
 
 class ENewArrayDeclarator : JElement {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     PArrayDecl[] getPartArrayDecls(){
         PArrayDecl[] res;
         Element      cur = this;
@@ -1801,7 +1801,7 @@ class ENewArrayDeclarator : JElement {
 }
 
 class EExprLiteral : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         PExprLiteral ex = new PExprLiteral;
 
@@ -1856,7 +1856,7 @@ class EExprLiteral : EExpression {
 }
 
 class EExprLiteralSuper : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         PExprLiteral ex = new PExprLiteral;
 
@@ -1867,7 +1867,7 @@ class EExprLiteralSuper : EExpression {
 }
 
 class EExprLiteralThrow : EStat {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PStatement getPartStatement(){
         PStatThrow ex = new PStatThrow;
 
@@ -1877,7 +1877,7 @@ class EExprLiteralThrow : EStat {
 }
 
 class EExprLiteralThis : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         PExprLiteral ex = new PExprLiteral;
 
@@ -1888,7 +1888,7 @@ class EExprLiteralThis : EExpression {
 }
 
 class ELiteralBuildinType : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     override PExpr getPartExpr(){
         PExprTypeInst p = new PExprTypeInst;
@@ -1926,7 +1926,7 @@ class ELiteralBuildinType : EExpression {
 }
 
 class EIdent : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
 
     override PExpr getPartExpr(){
         PExprIdent p = new PExprIdent;
@@ -1937,7 +1937,7 @@ class EIdent : EExpression {
 }
 
 class EDot : EExpression {
-    public mixin StdImpl!();
+    mixin StdImpl!();
     override PExpr getPartExpr(){
         PExprDot  p = new PExprDot;
 
@@ -1961,7 +1961,7 @@ class Ident {
     char[]   getJoined(){
         char[] res;
         bool   first = true;
-        foreach (char[] s; mIdents) {
+        foreach ( s; mIdents) {
             if (!first) {
                 res ~= '.';
             }
@@ -1989,7 +1989,7 @@ Ident makeIdentifier(Element e){
     if (e.getName() == "DOT") {
         for (Element c = e.getFirstChild; c !is null; c = c.getSibling()) {
             Ident ci = makeIdentifier(c);
-            foreach (char[] s; ci.mIdents) {
+            foreach ( s; ci.mIdents) {
                 i.mIdents ~= s;
             }
         }
@@ -2037,7 +2037,7 @@ IdentStar makeIdentifierStar(Element e){
 /**
  * escape D keywords, which are not keywords in Java.
  */
-char[]           escapeKeyword(char[] aIdent){
+char[]           escapeKeyword(const(char)[] aIdent){
     switch (aIdent) {
     case "abstract":
     case "alias":

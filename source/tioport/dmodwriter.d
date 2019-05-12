@@ -28,9 +28,12 @@ import tango.text.Util : trim, replace, locatePattern;
 import tango.text.convert.Integer;
 //import tango.text.stream.LineIterator;
 import tango.io.Stdout;
+import tango.io.FilePath;
 //import tango.io.Print;
 import tango.io.model.IFile; // FileConst;
 import tango.io.Console;
+import tango.io.stream.TextFile;
+// import tango.io.FileConduit;
 import tango.io.model.IConduit; // io.Buffer;
 // import tango.io.FileConduit;
 import tango.core.Array;
@@ -43,22 +46,21 @@ const char[] mixinEnd = "// end of TioPortMixin ";
 const char[] dmoduleExtension = ".d";
 
 class MixinReader {
-    string it;
+	import std.stdio:File;
+    typeof(File("test.txt").byLine()) it;
     //LineIterator!(char) it;
     char[] id;
     char[] nextline;
     char[] filename;
 
     public this( char[] filename ){
+	    import std.file:exists;
         this.filename = filename;
         //FIXME it = new LineIterator!(char)();
-        auto fp = new FilePath( filename );
-        if( fp.exists ){
-            auto fc = new FileConduit( filename );
-            //it.set( fc );
-            //Stdout.formatln( "X {} found", filename );
-            get();
-        }
+	if(exists(filename))
+	{
+		it = File(filename.idup).byLine();
+	}
     }
 
     bool matches( char[] pattern ){
@@ -66,40 +68,28 @@ class MixinReader {
     }
 
     char[] get(){
-        char[] result = nextline;
-        nextline = null;
-        if(! it.getBuffer.readable ){
-            it.getBuffer.fill;
-        }
-        if( it.getBuffer.readable ){
-            nextline = it.next().dup;
-            //Stdout.formatln( "L ({})", nextline );
+	    auto nextline = it.front.dup;
+	    it.popFront;
             if( nextline && locatePattern( nextline, mixinSeperator ) == 0 ){
                 id = .trim( nextline[ mixinSeperator.length .. $ ] ).dup;
-            }
-        }
-        else{
-            id = null;
-        }
-        return result;
+	    }
+	    else
+	    {
+		    id = null;
+	    }
+	    return nextline;
     }
 
     void checkComplete(){
-        IBuffer b = it.getBuffer;
-        if( b is null ){
-            return;
-        }
-        b.fill;
-        if( nextline || b.readable ){
-            throw new Exception( Layouter( "MixinReader not empty for file {}", filename ));
-        }
+	    import std.exception;
+        enforce(it.empty, Layouter( "MixinReader not empty for file {}", filename ));
     }
 
 }
 
 private MixinReader mixinreader;
 
-void writeDModule(char[] aRootPath, char[] aMixinTree, PModule aModule ){
+void writeDModule(const(char)[] aRootPath, const(char)[] aMixinTree, PModule aModule ){
     if( aModule.mIsNowrite ){
         return;
     }
@@ -141,7 +131,7 @@ void writeDModule(char[] aRootPath, char[] aMixinTree, PModule aModule ){
     mixinreader = new MixinReader( mixinname );
     //Stdout.formatln( "*** fn {0}", filename );
 
-
+/+FIXME
     FileConduit   file = new FileConduit(filename, FileConduit.ReadWriteCreate);
     file.truncate();
     // FIXME DModuleWriter w          = new DModuleWriter(new Print!(char)(Layouter,new Buffer(file)));
@@ -171,6 +161,7 @@ void writeDModule(char[] aRootPath, char[] aMixinTree, PModule aModule ){
     }
     mixinreader.checkComplete;
     w.flush();
+    +/
 }
 
 
@@ -761,8 +752,8 @@ private {
             // this will make it possible to exchange it with a
             // method decl from the mixin
             char[] name = p.mName;
-            if( name in p.mModule.mExchangeFuncs ){
-                name = p.mModule.mExchangeFuncs[ name ];
+            if( name in p.mModuleFunc.mExchangeFuncs ){
+                name = p.mModuleFunc.mExchangeFuncs[ name ];
             }
             w.write(name);
 
@@ -966,7 +957,7 @@ private {
 
     class DModuleWriter {
         //FIXME Print!(char) w;
-	string w;
+	void function(const(char)[] s) w = &Print;
         int           indent = 0;
         bool          indentWait;
 
@@ -983,7 +974,7 @@ private {
 
         this(string aWriter){
             indentWait = false;
-            w          = aWriter;
+            //w          = aWriter;
         }
         //FIXME
 	/+
@@ -992,23 +983,23 @@ private {
             w          = aWriter;
         }
 	+/
-        void formatln(char[] aFormat, ...){
+        void formatln(const(char)[] aFormat, ...){
             checkIndent();
             write(Layouter(_arguments, _argptr, aFormat));
             nl();
         }
-        void format(char[] aFormat, ...){
+        void format(const(char)[] aFormat, ...){
             checkIndent();
             write(Layouter(_arguments, _argptr, aFormat));
         }
         void writeWithoutIndent(char[] aStr){
             w(aStr);
         }
-        void write(char[] aStr){
+        void write(const(char)[] aStr){
             checkIndent();
             w(aStr);
         }
-        void writeln(char[] aStr){
+        void writeln(const(char)[] aStr){
             checkIndent();
             w(aStr);
             nl();
@@ -1046,4 +1037,9 @@ private {
     }
 }
 
+void Print(const(char)[] s)
+{
+	import std.stdio;
+	writeln(s);
+}
 
