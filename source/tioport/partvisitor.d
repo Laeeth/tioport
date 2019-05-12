@@ -17,10 +17,10 @@
  *     misrepresented as being the original software.
  *  3. This notice may not be removed or altered from any source distribution.
  */
-module PartVisitor;
+module tioport.partvisitor;
 
-import Parts;
-import Utils;
+import tioport.parts;
+import tioport.utils;
 
 //FIXME
 import tango.util.container.LinkedList;

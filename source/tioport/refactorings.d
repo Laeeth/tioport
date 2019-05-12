@@ -17,10 +17,10 @@
  *     misrepresented as being the original software.
  *  3. This notice may not be removed or altered from any source distribution.
  */
-module Refactorings;
+module tioport.refactorings;
 
-import Parts;
-import PartVisitor;
+import tioport.parts;
+import tioport.partvisitor;
 
 import             Integer =   tango.text.convert.Integer;
 import             tango.text.Util : locatePattern, substitute;
@@ -29,7 +29,7 @@ import               tango.util.container.HashSet;
 //import               tango.util.container.TreeMap;
 import tango.util.container.HashMap;
 alias TreeMap = HashMap;
-import Utils;
+import tioport.utils;
 
 //version = DEBUG_IMPORTS;
 

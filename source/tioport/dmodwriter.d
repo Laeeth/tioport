@@ -17,12 +17,12 @@
  *     misrepresented as being the original software.
  *  3. This notice may not be removed or altered from any source distribution.
  */
-module DModWriter;
+module tioport.dmodwriter;
 
-import tioport;
-import Parts;
-import PartVisitor;
-import Utils;
+import tioport.tioport;
+import tioport.parts;
+import tioport.partvisitor;
+import tioport.utils;
 
 import tango.text.Util : trim, replace, locatePattern;
 import tango.text.convert.Integer;

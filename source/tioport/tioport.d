@@ -19,11 +19,11 @@
  */
 module tioport;
 
-import Utils;
-import Refactorings;
-import Parts;
-import Resolve;
-import DModWriter;
+import tioport.utils;
+import tioport.refactorings;
+import tioport.parts;
+import tioport.resolve;
+import tioport.dmodwriter;
 
 import tango.core.Memory;
 

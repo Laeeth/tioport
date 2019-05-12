@@ -1,4 +1,4 @@
-module MiniDom;
+module tioport.minidom;
 
 import tango.io.Stdout;
 import tango.text.Util : trim;
@@ -6,7 +6,7 @@ import tango.text.Util : trim;
 import tango.text.Text;
 //import tango.io.protocol.model.IWriter;
 //import tango.io.model.IWriter;
-import Utils;
+import tioport.utils;
 
 
 void check( bool aCondition, char[] aMessage ){

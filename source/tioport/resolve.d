@@ -17,12 +17,12 @@
  *     misrepresented as being the original software.
  *  3. This notice may not be removed or altered from any source distribution.
  */
-module Resolve;
+module tioport.resolve;
 
-import Parts;
-import PartVisitor;
-import Refactorings;
-import Utils;
+import tioport.parts;
+import tioport.partvisitor;
+import tioport.refactorings;
+import tioport.utils;
 
 import tango.io.Stdout;
 
