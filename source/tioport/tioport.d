@@ -17,7 +17,7 @@
  *     misrepresented as being the original software.
  *  3. This notice may not be removed or altered from any source distribution.
  */
-module tioport;
+module tioport.tioport;
 
 import tioport.utils;
 import tioport.refactorings;
@@ -39,7 +39,7 @@ import tango.io.model.IFile; // FileConst
 //import           tango.io.FileConst;
 import           tango.io.FilePath;
 //import           tango.io.protocol.Writer;
-import           MiniDom;
+import           tioport.minidom;
 //import tango.util.collection.LinkSeq;
 import tango.util.container.LinkedList;
 alias LinkSeq = LinkedList;
