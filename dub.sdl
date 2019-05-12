@@ -1,0 +1,7 @@
+name "tioport"
+description "Java to D converter"
+authors "keinfarbton"
+copyright "Copyright © 2019, keinfarbton"
+license "MIT"
+dependency "tango" version="~>1.0.5"
+dependency "kxml" version="~master"
