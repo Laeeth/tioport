@@ -1349,7 +1349,7 @@ class PCtor : PCallable {
             }
         }
         if (mStatList !is null) {
-            return(mStatList.findTypeInst(aName));;
+            return(mStatList.findTypeInst(aName));
         }
         return(null);
     }
@@ -1360,7 +1360,7 @@ class PCtor : PCallable {
             }
         }
         if (mStatList !is null) {
-            return(mStatList.findParameterDef(aName));;
+            return(mStatList.findParameterDef(aName));
         }
         return(null);
     }
@@ -1408,7 +1408,7 @@ class PMethodDef : PCtor {
             }
         }
         if (mStatList !is null) {
-            return(mStatList.findTypeInst(aName));;
+            return(mStatList.findTypeInst(aName));
         }
         return(null);
     }
@@ -1419,7 +1419,7 @@ class PMethodDef : PCtor {
             }
         }
         if (mStatList !is null) {
-            return(mStatList.findParameterDef(aName));;
+            return(mStatList.findParameterDef(aName));
         }
         return(null);
     }
